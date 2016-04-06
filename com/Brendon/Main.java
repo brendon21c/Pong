@@ -69,7 +69,7 @@ public class Main {
 
                 if (ballX < 0) {     // decides who wins
                     playerScore += 1;
-                } else if (ballX > 300) {
+                } else if (ballX > screenSize) {
                     compScore += 1;
                 }
 
