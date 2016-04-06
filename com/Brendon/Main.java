@@ -16,22 +16,22 @@ public class Main {
     static int screenSize = 300;    //and width - screen is square
     static int paddleSize = 25;     //Actually half the paddle size - how much to draw on each side of center
     static int paddleDistanceFromSide = 10;  //How much space between each paddle and side of screen
-    
+
     static int gameSpeed = 50;  //How many milliseconds between clock ticks? Reduce this to speed up game
-    
-    static int computerPaddleY = screenSize / 2 ;    //location of the center of the paddles on the Y-axis of the screen
-    static int humanPaddleY = screenSize / 2 ;
-    
+
+    static int computerPaddleY = screenSize / 2;    //location of the center of the paddles on the Y-axis of the screen
+    static int humanPaddleY = screenSize / 2;
+
     static int computerPaddleMaxSpeed = 3;   //Max number of pixels that computer paddle can move clock tick. Higher number = easier for computer
-    static int humanPaddleMaxSpeed = 5;   //This doesn't quite do the same thing... this is how many pixels human moves per key press TODO use this in a better way
-    
+    static int humanPaddleMaxSpeed = 10;   //This doesn't quite do the same thing... this is how many pixels human moves per key press TODO use this in a better way
+
     static int humanPaddleSpeed = 0;      // "speed" is pixels moved up or down per clock tick
     static int computerPaddleSpeed = 0;   // same
-    
-    static double  ballX = screenSize / 2;   //Imagine the ball is in a square box. These are the coordinates of the top of that box.
-    static double  ballY = screenSize / 2;   //So this starts the ball in (roughly) the center of the screen
+
+    static double ballX = screenSize / 2;   //Imagine the ball is in a square box. These are the coordinates of the top of that box.
+    static double ballY = screenSize / 2;   //So this starts the ball in (roughly) the center of the screen
     static int ballSize = 10;                //Diameter of ball
-    
+
     static double ballSpeed = 5;   //Again, pixels moved per clock tick
 
 
@@ -47,9 +47,13 @@ public class Main {
     static Timer timer;    //Ticks every *gameSpeed* milliseconds. Every time it ticks, the ball and computer paddle move
 
     static GameDisplay gamePanel;   //draw the game components here
-    
+
     static boolean gameOver;      //Used to work out what message, if any, to display on the screen
     static boolean removeInstructions = false;  // Same as above
+
+    static int playerScore = 0;    // these keep track of who wins each game.
+    static int compScore = 0;
+
 
     private static class GameDisplay extends JPanel {
 
@@ -60,12 +64,32 @@ public class Main {
             //System.out.println("* Repaint *");
 
             if (gameOver == true) {
-                g.setColor(Color.pink);
-                g.drawString( "Game over!", 20, 30 );
+                g.setColor(Color.RED);
+                g.drawString("Game Over!!", 20, 30);
+
+                if (ballX < 0) {     // decides who wins
+                    playerScore += 1;
+                } else if (ballX > 300) {
+                    compScore += 1;
+                }
+
+                /*
+                This section here is how i got the program to loop itself, bane of my existence for the last 2
+                days btw, I created a new keystroke action to restart the timer on command so the user can read the scores.
+                 */
+                gameOver = false;
+                ballX = screenSize / 2;
+                ballY = screenSize / 2;
+                g.setColor(Color.black);
+                g.drawString("Player Score = " + playerScore, 20, 50);
+                g.drawString("Computer Score = " + compScore, 20, 70);
+                g.drawString("press n to start a new game", 20, 90);
+                timer.stop();
                 return;
+
             }
 
-            if (removeInstructions == false ) {
+            if (removeInstructions == false) {
 
                 g.setColor(Color.BLUE);
                 g.drawString("Pong! Press up or down to move", 20, 30);
@@ -80,32 +104,39 @@ public class Main {
             //Other parts of the code will modify these variables
 
             //Ball - a circle is just an oval with the height equal to the width
-            g.drawOval((int)ballX, (int)ballY, ballSize, ballSize);
-            g.fillOval((int)ballX, (int)ballY, ballSize, ballSize); // filled the ball
+            g.drawOval((int) ballX, (int) ballY, ballSize, ballSize);
+            g.fillOval((int) ballX, (int) ballY, ballSize, ballSize); // filled the ball
             g.setColor(Color.blue); //reset the color for the paddles
             //Computer paddle
             g.drawLine(paddleDistanceFromSide, computerPaddleY - paddleSize, paddleDistanceFromSide, computerPaddleY + paddleSize);
             //Human paddle
             g.drawLine(screenSize - paddleDistanceFromSide, humanPaddleY - paddleSize, screenSize - paddleDistanceFromSide, humanPaddleY + paddleSize);
-            
+
         }
     }
 
     //Listen for user pressing a key, and moving human paddle in response
     private static class KeyHandler implements KeyListener {
-        
+
         @Override
         public void keyTyped(KeyEvent ev) {
             char keyPressed = ev.getKeyChar();
             char q = 'q';
-            if( keyPressed == q){
+            char n = 'n';
+
+            if (keyPressed == q) {
                 System.exit(0);    //quit if user presses the q key.
             }
+
+            if (keyPressed == n) {
+                timer.start(); //starts a new game.
+            }
         }
-        
+
         @Override
-        public void keyReleased(KeyEvent ev) {}   //Don't need this one, but required to implement it.
-        
+        public void keyReleased(KeyEvent ev) {
+        }   //Don't need this one, but required to implement it.
+
         @Override
         public void keyPressed(KeyEvent ev) {
 
@@ -124,47 +155,50 @@ public class Main {
             //In this case, it will be GameDisplay JPanel
             ev.getComponent().repaint();   //This calls paintComponent(Graphics g) again
         }
-        
+
         private void moveDown() {
             //Coordinates decrease as you go up the screen, that's why this looks backwards.
             if (humanPaddleY < screenSize - paddleSize) {
-                humanPaddleY+=humanPaddleMaxSpeed;
+                humanPaddleY += humanPaddleMaxSpeed;
             }
         }
-        
+
         private void moveUp() {
             //Coordinates increase as you go down the screen, that's why this looks backwards.
             if (humanPaddleY > paddleSize) {
-                humanPaddleY-=humanPaddleMaxSpeed;
+                humanPaddleY -= humanPaddleMaxSpeed;
             }
         }
 
     }
 
-    
+
     public static void main(String[] args) {
 
 
-            gamePanel = new GameDisplay();
+        gamePanel = new GameDisplay();
 
-            JPanel content = new JPanel();
-            content.setLayout(new BorderLayout());
-            content.add(gamePanel, BorderLayout.CENTER);
+        JPanel content = new JPanel();
+        content.setLayout(new BorderLayout());
+        content.add(gamePanel, BorderLayout.CENTER);
 
-            JFrame window = new JFrame();
-            window.setUndecorated(true);   //Hides the title bar.
+        JFrame window = new JFrame();
+        window.setUndecorated(true);   //Hides the title bar.
 
-            window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);   //Quit the program when we close this window
-            window.setContentPane(content);
-            window.setSize(screenSize, screenSize);
-            window.setLocation(450, 250);    // I changed this so it would appear in the center of my screen.
-            window.setVisible(true);
+        window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);   //Quit the program when we close this window
+        window.setContentPane(content);
+        window.setSize(screenSize, screenSize);
+        window.setLocation(450, 250);    // I changed this so it would appear in the center of my screen.
+        window.setVisible(true);
 
-            KeyHandler listener = new KeyHandler();
-            window.addKeyListener(listener);
+        KeyHandler listener = new KeyHandler();
+        window.addKeyListener(listener);
 
-            //Below, we'll create and start a timer that notifies an ActionListener every time it ticks
-            //First, need to create the listener:
+        int playerScore = 0;
+        int compScore = 0;
+
+        //Below, we'll create and start a timer that notifies an ActionListener every time it ticks
+        //First, need to create the listener:
 
 
             ActionListener gameUpdater = new ActionListener() {
@@ -175,13 +209,15 @@ public class Main {
                     //It's containing class is Main
                     //moveBall() and moveComputerPaddle belong to the outer class - Main
                     //So we have to say Main.moveBall() to refer to these methods
+
                     Main.moveBall();
                     Main.moveComputerPaddle();
 
-                    /*
-                    if (gameOver) {
-                        timer.stop();
-                    } */
+                    if (gameOver) {    // reinitialize the bal and computer movement.
+
+                        Main.moveBall();
+                        Main.moveComputerPaddle();
+                    }
                     gamePanel.repaint();
                 }
             };
@@ -189,7 +225,11 @@ public class Main {
             timer = new Timer(gameSpeed, gameUpdater);
             timer.start();    //Every time the timer ticks, the actionPerformed method of the ActionListener is called
 
-        }
+    }
+
+
+
+
 
 
     //Uses the current position of ball and paddle to move the computer paddle towards the ball
@@ -233,6 +273,8 @@ public class Main {
         boolean hitWall = false;
         boolean hitHumanPaddle = false;
         boolean hitComputerPaddle = false;
+
+
 
         if (ballX <= 0 || ballX >= screenSize ) {
             gameOver = true;
