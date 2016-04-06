@@ -1,4 +1,4 @@
-package com.clara;
+package com.Brendon;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +17,7 @@ public class Main {
     static int paddleSize = 25;     //Actually half the paddle size - how much to draw on each side of center
     static int paddleDistanceFromSide = 10;  //How much space between each paddle and side of screen
     
-    static int gameSpeed = 75;  //How many milliseconds between clock ticks? Reduce this to speed up game
+    static int gameSpeed = 50;  //How many milliseconds between clock ticks? Reduce this to speed up game
     
     static int computerPaddleY = screenSize / 2 ;    //location of the center of the paddles on the Y-axis of the screen
     static int humanPaddleY = screenSize / 2 ;
@@ -60,22 +60,29 @@ public class Main {
             //System.out.println("* Repaint *");
 
             if (gameOver == true) {
+                g.setColor(Color.pink);
                 g.drawString( "Game over!", 20, 30 );
                 return;
             }
 
             if (removeInstructions == false ) {
+
+                g.setColor(Color.BLUE);
                 g.drawString("Pong! Press up or down to move", 20, 30);
+                g.setColor(Color.black);
                 g.drawString("Press q to quit", 20, 60);
             }
 
-            g.setColor(Color.blue);
+            g.setColor(Color.ORANGE); //set the color of the ball
+
 
             //While game is playing, these methods draw the ball, paddles, using the global variables
             //Other parts of the code will modify these variables
 
             //Ball - a circle is just an oval with the height equal to the width
             g.drawOval((int)ballX, (int)ballY, ballSize, ballSize);
+            g.fillOval((int)ballX, (int)ballY, ballSize, ballSize); // filled the ball
+            g.setColor(Color.blue); //reset the color for the paddles
             //Computer paddle
             g.drawLine(paddleDistanceFromSide, computerPaddleY - paddleSize, paddleDistanceFromSide, computerPaddleY + paddleSize);
             //Human paddle
@@ -136,48 +143,54 @@ public class Main {
 
     
     public static void main(String[] args) {
-        
-        gamePanel = new GameDisplay();
 
-        JPanel content = new JPanel();
-        content.setLayout(new BorderLayout());
-        content.add(gamePanel, BorderLayout.CENTER);
-        
-        JFrame window = new JFrame();
-        window.setUndecorated(true);   //Hides the title bar.
 
-        window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);   //Quit the program when we close this window
-        window.setContentPane(content);
-        window.setSize(screenSize, screenSize);
-        window.setLocation(100,100);    //Where on the screen will this window appear?
-        window.setVisible(true);
+            gamePanel = new GameDisplay();
 
-        KeyHandler listener = new KeyHandler();
-        window.addKeyListener(listener);
+            JPanel content = new JPanel();
+            content.setLayout(new BorderLayout());
+            content.add(gamePanel, BorderLayout.CENTER);
 
-        //Below, we'll create and start a timer that notifies an ActionListener every time it ticks
-        //First, need to create the listener:
-        ActionListener gameUpdater = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+            JFrame window = new JFrame();
+            window.setUndecorated(true);   //Hides the title bar.
 
-                //gameUpdater is an inner class
-                //It's containing class is Main
-                //moveBall() and moveComputerPaddle belong to the outer class - Main
-                //So we have to say Main.moveBall() to refer to these methods
-                Main.moveBall();
-                Main.moveComputerPaddle();
+            window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);   //Quit the program when we close this window
+            window.setContentPane(content);
+            window.setSize(screenSize, screenSize);
+            window.setLocation(450, 250);    // I changed this so it would appear in the center of my screen.
+            window.setVisible(true);
 
-                if (gameOver) {
-                    timer.stop();
+            KeyHandler listener = new KeyHandler();
+            window.addKeyListener(listener);
+
+            //Below, we'll create and start a timer that notifies an ActionListener every time it ticks
+            //First, need to create the listener:
+
+
+            ActionListener gameUpdater = new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                    //gameUpdater is an inner class
+                    //It's containing class is Main
+                    //moveBall() and moveComputerPaddle belong to the outer class - Main
+                    //So we have to say Main.moveBall() to refer to these methods
+                    Main.moveBall();
+                    Main.moveComputerPaddle();
+
+                    /*
+                    if (gameOver) {
+                        timer.stop();
+                    } */
+                    gamePanel.repaint();
                 }
-                gamePanel.repaint();
-            }
-        };
-        
-        timer = new Timer(gameSpeed, gameUpdater);
-        timer.start();    //Every time the timer ticks, the actionPerformed method of the ActionListener is called
-    }
+            };
+
+            timer = new Timer(gameSpeed, gameUpdater);
+            timer.start();    //Every time the timer ticks, the actionPerformed method of the ActionListener is called
+
+        }
+
 
     //Uses the current position of ball and paddle to move the computer paddle towards the ball
     protected static void moveComputerPaddle(){
